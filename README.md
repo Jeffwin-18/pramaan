@@ -148,7 +148,3 @@ For additional implementation notes and production requirements, see [`NOTES.md`
 
 ## Team
 **Team Deep Thinkers**  
-
-## License
-
-No license has been specified. All rights remain with the respective copyright holders unless a license is added to this repository.
