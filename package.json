@@ -1,0 +1,46 @@
+{
+  "name": "apaar-verification-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SIH 2026 SIH26263 - APAAR ID based student data management and verification platform (Team Deep Thinkers)",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:push": "prisma db push --skip-generate && prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:preview": "tsx scripts/seed-preview.ts",
+    "db:reset": "prisma db push --force-reset --skip-generate && prisma generate && tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@react-pdf/renderer": "^3.4.4",
+    "bcryptjs": "^2.4.3",
+    "clsx": "^2.1.1",
+    "next": "^14.2.15",
+    "papaparse": "^5.4.1",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.13.0",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.19.43",
+    "@types/papaparse": "^5.5.2",
+    "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.31",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.14",
+    "tsx": "^4.23.15",
+    "typescript": "5.6"
+  }
+}

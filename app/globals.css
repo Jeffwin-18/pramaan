@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body { height: 100%; }
+  body { @apply bg-paper text-ink font-sans text-base antialiased; }
+  :focus-visible { outline: 2px solid #1F3A5F; outline-offset: 1px; }
+  ::selection { background: #D9E2EE; }
+  table { @apply border-collapse; }
+}
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded border border-line bg-surface text-ink text-sm font-medium hover:bg-paper disabled:opacity-50 disabled:cursor-not-allowed; }
+  .btn-primary { @apply bg-accent border-accent text-white hover:bg-accent-hover hover:border-accent-hover; }
+  .badge { @apply inline-flex items-center h-[18px] px-1.5 rounded-sm text-[10px] font-semibold uppercase tracking-[0.06em] border; }
+  .th { @apply sticky top-0 bg-paper border-b border-line px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted; }
+  .td { @apply px-3 py-2 border-b border-line; }
+  .num { @apply font-mono text-right tabular-nums; }
+  .kbd { @apply inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-sm border border-line bg-paper font-mono text-[10px] text-muted; }
+}

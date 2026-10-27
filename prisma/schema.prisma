@@ -1,0 +1,188 @@
+// SQLite is used so the prototype runs with zero infrastructure.
+// Switching to PostgreSQL: change `provider`, set DATABASE_URL, and convert the
+// String-typed JSON columns (*Json) to `Json` and status/role strings to enums.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id
+  email         String   @unique
+  name          String
+  role          String   // AICTE_ADMIN | INSTITUTION_ADMIN | VERIFIER | AUDITOR
+  organisation  String?  // employer / regulator name for VERIFIER accounts
+  passwordHash  String
+  institutionId String?
+  createdAt     DateTime @default(now())
+
+  institution Institution? @relation(fields: [institutionId], references: [id])
+  consents    Consent[]
+  versions    RecordVersion[]
+  uploads     UploadBatch[]
+}
+
+model Institution {
+  id                 String   @id
+  name               String
+  aicteId            String   @unique // fictional format 1-NNNNNNN
+  type               String   // PGDM | Engineering | Pharmacy | Management
+  state              String
+  city               String
+  approvedIntakeTotal Int
+  createdAt          DateTime @default(now())
+
+  courses  Course[]
+  records  StudentRecord[]
+  flags    Flag[]
+  uploads  UploadBatch[]
+  users    User[]
+  risk     RiskScore?
+}
+
+model Course {
+  id                    String @id
+  institutionId         String
+  name                  String
+  level                 String // UG | PG
+  approvedIntake        Int
+  supernumerarySeats    Int
+  declaredCategorySeats String // JSON: {"GEN":n,"OBC":n,"SC":n,"ST":n,"EWS":n}
+
+  institution Institution     @relation(fields: [institutionId], references: [id])
+  records     StudentRecord[]
+}
+
+model StudentRecord {
+  id                String   @id
+  institutionId     String
+  courseId          String
+  uploadBatchId     String?
+  apaarId           String?  // nullable: APAAR_MISSING is a rule, not a DB constraint
+  fullName          String
+  dob               DateTime
+  gender            String   // M | F | O
+  category          String   // GEN | OBC | SC | ST | EWS
+  isNRI             Boolean  @default(false)
+  isOCI             Boolean  @default(false)
+  isForeignNational Boolean  @default(false)
+  admissionYear     String   // e.g. 2025-26
+  admissionType     String   // regular | supernumerary | NRI | OCI | FN
+  status            String   // VERIFIED | FLAGGED | PENDING | REJECTED
+  fingerprint       String   // SHA256 one-way hash; Aadhaar is never stored
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  institution Institution     @relation(fields: [institutionId], references: [id])
+  course      Course          @relation(fields: [courseId], references: [id])
+  batch       UploadBatch?    @relation(fields: [uploadBatchId], references: [id])
+  versions    RecordVersion[]
+  flags       Flag[]
+
+  @@index([apaarId])
+  @@index([fingerprint])
+  @@index([institutionId, admissionYear])
+  @@index([status])
+}
+
+model RecordVersion {
+  id          String   @id
+  recordId    String
+  version     Int
+  changedById String?
+  changedAt   DateTime
+  diffJson    String   // {"field":{"from":..,"to":..}}
+
+  record    StudentRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  changedBy User?         @relation(fields: [changedById], references: [id])
+
+  @@unique([recordId, version])
+}
+
+model Flag {
+  id              String    @id
+  recordId        String?   // null for institution-level flags
+  institutionId   String
+  ruleCode        String
+  severity        String    // BLOCKER | WARNING | INFO
+  message         String
+  explanation     String
+  suggestedFix    String
+  confidence      Float?    // 0-1, null when the rule is deterministic with no score
+  relatedRecordId String?   // the existing record a duplicate / near-match points at
+  status          String    @default("OPEN") // OPEN | ESCALATED | RESOLVED
+  createdAt       DateTime  @default(now())
+  resolvedAt      DateTime?
+  resolvedById    String?
+  resolutionNote  String?
+
+  record      StudentRecord? @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  institution Institution    @relation(fields: [institutionId], references: [id])
+
+  @@index([ruleCode])
+  @@index([institutionId, status])
+}
+
+model Consent {
+  id             String   @id
+  token          String   @unique // QR target: /verify/:token
+  apaarId        String
+  verifierUserId String
+  purpose        String   // employment | admission | regulatory
+  reason         String?
+  grantedAt      DateTime
+  expiresAt      DateTime
+  recordId       String?
+
+  verifier User @relation(fields: [verifierUserId], references: [id])
+}
+
+model AuditLog {
+  id          String   @id
+  actorUserId String?
+  actorRole   String
+  action      String
+  entityType  String
+  entityId    String
+  beforeJson  String?
+  afterJson   String?
+  ip          String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorUserId])
+  @@index([action])
+}
+
+model UploadBatch {
+  id            String   @id
+  institutionId String
+  admissionYear String
+  uploadedById  String
+  fileName      String
+  rowCount      Int
+  acceptedCount Int
+  rejectedCount Int
+  flaggedCount  Int
+  status        String   // COMMITTED | FAILED
+  createdAt     DateTime @default(now())
+
+  institution Institution     @relation(fields: [institutionId], references: [id])
+  uploader    User            @relation(fields: [uploadedById], references: [id])
+  records     StudentRecord[]
+}
+
+model RiskScore {
+  institutionId String   @id
+  score         Int      // 0-100
+  factorsJson   String   // [{key,label,raw,display,weight,subScore,points}]
+  explanation   String
+  computedAt    DateTime
+
+  institution Institution @relation(fields: [institutionId], references: [id])
+}
