@@ -147,9 +147,7 @@ The application should not be used to verify real student identities or process 
 For additional implementation notes and production requirements, see [`NOTES.md`](NOTES.md).
 
 ## Team
-
 **Team Deep Thinkers**  
-Smart India Hackathon 2026 · SIH26263
 
 ## License
 
